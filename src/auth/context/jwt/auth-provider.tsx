@@ -2,8 +2,8 @@ import { useMemo, useEffect, useReducer, useCallback } from 'react';
 
 import axios, { endpoints } from 'src/utils/axios';
 
+import { setSession } from './utils';
 import { AuthContext } from './auth-context';
-import { setSession, isValidToken } from './utils';
 import { AuthUserType, ActionMapType, AuthStateType } from '../../types';
 
 enum Types {
@@ -78,18 +78,17 @@ export function AuthProvider({ children }: Props) {
     try {
       const accessToken = sessionStorage.getItem(STORAGE_KEY);
 
-      if (accessToken && isValidToken(accessToken)) {
+      if (accessToken) {
         setSession(accessToken);
+        const id = sessionStorage.getItem('id');
 
-        const res = await axios.get(endpoints.auth.me);
-
-        const { user } = res.data;
+        const res = await axios.post('/customer/me', { id });
 
         dispatch({
           type: Types.INITIAL,
           payload: {
             user: {
-              ...user,
+              ...res.data?.data,
               accessToken,
             },
           },
@@ -118,17 +117,18 @@ export function AuthProvider({ children }: Props) {
   }, [initialize]);
 
   // LOGIN
-  const login = useCallback(async (email: string, password: string) => {
+  const login = useCallback(async (username: string, password: string) => {
     const data = {
-      email,
+      username,
       password,
     };
 
     const res = await axios.post(endpoints.auth.login, data);
 
-    const { accessToken, user } = res.data;
-
+    const { accessToken, user } = res.data.data;
+    // console.log({ accessToken, user });
     setSession(accessToken);
+    sessionStorage.setItem('id', user?.customer_id);
 
     dispatch({
       type: Types.LOGIN,
@@ -173,6 +173,7 @@ export function AuthProvider({ children }: Props) {
   // LOGOUT
   const logout = useCallback(async () => {
     setSession(null);
+    sessionStorage.removeItem('id');
     dispatch({
       type: Types.LOGOUT,
     });

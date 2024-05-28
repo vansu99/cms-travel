@@ -1,8 +1,10 @@
+import { useState, useEffect } from 'react';
+
 import Container from '@mui/material/Container';
 
 import { paths } from 'src/routes/paths';
 
-import { _userList } from 'src/_mock';
+import axios from 'src/utils/axios';
 
 import { useSettingsContext } from 'src/components/settings';
 import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
@@ -17,8 +19,21 @@ type Props = {
 
 export default function UserEditView({ id }: Props) {
   const settings = useSettingsContext();
+  const [detail, setDetail] = useState<any>({});
 
-  const currentUser = _userList.find((user) => user.id === id);
+  useEffect(() => {
+    // eslint-disable-next-line consistent-return
+    async function getDetail() {
+      try {
+        const response = await axios.post('/customer/detail', { id });
+        setDetail(response.data.data);
+      } catch (error) {
+        return error;
+      }
+    }
+
+    getDetail();
+  }, [id]);
 
   return (
     <Container maxWidth={settings.themeStretch ? false : 'lg'}>
@@ -33,14 +48,14 @@ export default function UserEditView({ id }: Props) {
             name: 'User',
             href: paths.dashboard.user.root,
           },
-          { name: currentUser?.name },
+          { name: detail?.name },
         ]}
         sx={{
           mb: { xs: 3, md: 5 },
         }}
       />
 
-      <UserNewEditForm currentUser={currentUser} />
+      {detail?.customer_id ? <UserNewEditForm currentUser={detail} /> : <div>Loading</div>}
     </Container>
   );
 }

@@ -1,13 +1,10 @@
 import isEqual from 'lodash/isEqual';
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
-import Tab from '@mui/material/Tab';
-import Tabs from '@mui/material/Tabs';
 import Card from '@mui/material/Card';
 import Table from '@mui/material/Table';
 import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
-import { alpha } from '@mui/material/styles';
 import Container from '@mui/material/Container';
 import TableBody from '@mui/material/TableBody';
 import IconButton from '@mui/material/IconButton';
@@ -19,9 +16,8 @@ import { RouterLink } from 'src/routes/components';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
-import { _roles, _userList, USER_STATUS_OPTIONS } from 'src/_mock';
+import axios from 'src/utils/axios';
 
-import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
 import Scrollbar from 'src/components/scrollbar';
 import { useSnackbar } from 'src/components/snackbar';
@@ -43,18 +39,12 @@ import { IUserItem, IUserTableFilters, IUserTableFilterValue } from 'src/types/u
 
 import UserTableRow from '../user-table-row';
 import UserTableToolbar from '../user-table-toolbar';
-import UserTableFiltersResult from '../user-table-filters-result';
-
-// ----------------------------------------------------------------------
-
-const STATUS_OPTIONS = [{ value: 'all', label: 'All' }, ...USER_STATUS_OPTIONS];
 
 const TABLE_HEAD = [
   { id: 'name', label: 'Name' },
-  { id: 'phoneNumber', label: 'Phone Number', width: 180 },
-  { id: 'company', label: 'Company', width: 220 },
-  { id: 'role', label: 'Role', width: 180 },
-  { id: 'status', label: 'Status', width: 100 },
+  { id: 'phone_number', label: 'Phone Number' },
+  { id: 'user_name', label: 'Username' },
+  { id: 'email', label: 'Email' },
   { id: '', width: 88 },
 ];
 
@@ -63,8 +53,6 @@ const defaultFilters: IUserTableFilters = {
   role: [],
   status: 'all',
 };
-
-// ----------------------------------------------------------------------
 
 export default function UserListView() {
   const { enqueueSnackbar } = useSnackbar();
@@ -77,9 +65,23 @@ export default function UserListView() {
 
   const confirm = useBoolean();
 
-  const [tableData, setTableData] = useState<IUserItem[]>(_userList);
+  const [tableData, setTableData] = useState<any[]>([]);
 
   const [filters, setFilters] = useState(defaultFilters);
+
+  useEffect(() => {
+    // eslint-disable-next-line consistent-return
+    async function getList() {
+      try {
+        const response = await axios.get('/customer/list');
+        setTableData(response.data.data as any);
+      } catch (error) {
+        return error;
+      }
+    }
+
+    getList();
+  }, []);
 
   const dataFiltered = applyFilter({
     inputData: tableData,
@@ -109,12 +111,8 @@ export default function UserListView() {
     [table]
   );
 
-  const handleResetFilters = useCallback(() => {
-    setFilters(defaultFilters);
-  }, []);
-
   const handleDeleteRow = useCallback(
-    (id: string) => {
+    async (id: string) => {
       const deleteRow = tableData.filter((row) => row.id !== id);
 
       enqueueSnackbar('Delete success!');
@@ -122,6 +120,8 @@ export default function UserListView() {
       setTableData(deleteRow);
 
       table.onUpdatePageDeleteRow(dataInPage.length);
+
+      await axios.post('/customer/delete', { id });
     },
     [dataInPage.length, enqueueSnackbar, table, tableData]
   );
@@ -144,13 +144,6 @@ export default function UserListView() {
       router.push(paths.dashboard.user.edit(id));
     },
     [router]
-  );
-
-  const handleFilterStatus = useCallback(
-    (event: React.SyntheticEvent, newValue: string) => {
-      handleFilters('status', newValue);
-    },
-    [handleFilters]
   );
 
   return (
@@ -179,59 +172,7 @@ export default function UserListView() {
         />
 
         <Card>
-          <Tabs
-            value={filters.status}
-            onChange={handleFilterStatus}
-            sx={{
-              px: 2.5,
-              boxShadow: (theme) => `inset 0 -2px 0 0 ${alpha(theme.palette.grey[500], 0.08)}`,
-            }}
-          >
-            {STATUS_OPTIONS.map((tab) => (
-              <Tab
-                key={tab.value}
-                iconPosition="end"
-                value={tab.value}
-                label={tab.label}
-                icon={
-                  <Label
-                    variant={
-                      ((tab.value === 'all' || tab.value === filters.status) && 'filled') || 'soft'
-                    }
-                    color={
-                      (tab.value === 'active' && 'success') ||
-                      (tab.value === 'pending' && 'warning') ||
-                      (tab.value === 'banned' && 'error') ||
-                      'default'
-                    }
-                  >
-                    {['active', 'pending', 'banned', 'rejected'].includes(tab.value)
-                      ? tableData.filter((user) => user.status === tab.value).length
-                      : tableData.length}
-                  </Label>
-                }
-              />
-            ))}
-          </Tabs>
-
-          <UserTableToolbar
-            filters={filters}
-            onFilters={handleFilters}
-            //
-            roleOptions={_roles}
-          />
-
-          {canReset && (
-            <UserTableFiltersResult
-              filters={filters}
-              onFilters={handleFilters}
-              //
-              onResetFilters={handleResetFilters}
-              //
-              results={dataFiltered.length}
-              sx={{ p: 2.5, pt: 0 }}
-            />
-          )}
+          <UserTableToolbar filters={filters} onFilters={handleFilters} />
 
           <TableContainer sx={{ position: 'relative', overflow: 'unset' }}>
             <TableSelectedAction
@@ -304,7 +245,6 @@ export default function UserListView() {
             rowsPerPage={table.rowsPerPage}
             onPageChange={table.onChangePage}
             onRowsPerPageChange={table.onChangeRowsPerPage}
-            //
             dense={table.dense}
             onChangeDense={table.onChangeDense}
           />

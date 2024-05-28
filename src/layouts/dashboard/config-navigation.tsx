@@ -52,10 +52,10 @@ export function useNavData() {
             path: paths.dashboard.user.root,
             icon: ICONS.user,
             children: [
-              { title: t('profile'), path: paths.dashboard.user.root },
+              // { title: t('profile'), path: paths.dashboard.user.root },
               { title: t('list'), path: paths.dashboard.user.list },
               { title: t('create'), path: paths.dashboard.user.new },
-              { title: t('edit'), path: paths.dashboard.user.demo.edit },
+              // { title: t('edit'), path: paths.dashboard.user.demo.edit },
               { title: t('account'), path: paths.dashboard.user.account },
             ],
           },
@@ -66,9 +66,9 @@ export function useNavData() {
             icon: ICONS.blog,
             children: [
               { title: t('list'), path: paths.dashboard.post.root },
-              { title: t('details'), path: paths.dashboard.post.demo.details },
+              // { title: t('details'), path: paths.dashboard.post.demo.details },
               { title: t('create'), path: paths.dashboard.post.new },
-              { title: t('edit'), path: paths.dashboard.post.demo.edit },
+              // { title: t('edit'), path: paths.dashboard.post.demo.edit },
             ],
           },
           // TOUR
@@ -80,7 +80,7 @@ export function useNavData() {
               { title: t('list'), path: paths.dashboard.tour.root },
               { title: t('details'), path: paths.dashboard.tour.demo.details },
               { title: t('create'), path: paths.dashboard.tour.new },
-              { title: t('edit'), path: paths.dashboard.tour.demo.edit },
+              // { title: t('edit'), path: paths.dashboard.tour.demo.edit },
             ],
           },
         ],

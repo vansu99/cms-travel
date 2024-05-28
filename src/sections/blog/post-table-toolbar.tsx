@@ -3,24 +3,23 @@ import { useCallback } from 'react';
 import Stack from '@mui/material/Stack';
 import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
+import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
 
 import Iconify from 'src/components/iconify';
 import CustomPopover, { usePopover } from 'src/components/custom-popover';
 
-import { IUserTableFilters, IUserTableFilterValue } from 'src/types/user';
-
 type Props = {
-  filters: IUserTableFilters;
-  onFilters: (name: string, value: IUserTableFilterValue) => void;
+  filters: any;
+  onFilters: (name: string, value: any) => void;
 };
 
-export default function UserTableToolbar({ filters, onFilters }: Props) {
+export default function PostTableToolbar({ filters, onFilters }: Props) {
   const popover = usePopover();
 
   const handleFilterName = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      onFilters('name', event.target.value);
+      onFilters('title', event.target.value);
     },
     [onFilters]
   );
@@ -53,6 +52,10 @@ export default function UserTableToolbar({ filters, onFilters }: Props) {
               ),
             }}
           />
+
+          <IconButton onClick={popover.onOpen}>
+            <Iconify icon="eva:more-vertical-fill" />
+          </IconButton>
         </Stack>
       </Stack>
 

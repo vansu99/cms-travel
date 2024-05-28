@@ -1,17 +1,17 @@
+import { format } from 'date-fns';
+
 import Button from '@mui/material/Button';
+import Avatar from '@mui/material/Avatar';
 import MenuItem from '@mui/material/MenuItem';
 import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
 import IconButton from '@mui/material/IconButton';
-import ListItemText from '@mui/material/ListItemText';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
 import Iconify from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import CustomPopover, { usePopover } from 'src/components/custom-popover';
-
-import UserQuickEditForm from './user-quick-edit-form';
 
 type Props = {
   selected: boolean;
@@ -21,41 +21,34 @@ type Props = {
   onDeleteRow: VoidFunction;
 };
 
-export default function UserTableRow({
+export default function PostTableRow({
   row,
   selected,
   onEditRow,
   onSelectRow,
   onDeleteRow,
 }: Props) {
-  const { name, user_name, email, phone_number } = row;
+  const { created_at, title, image, description, location } = row;
 
   const confirm = useBoolean();
-
-  const quickEdit = useBoolean();
 
   const popover = usePopover();
 
   return (
     <>
       <TableRow hover selected={selected}>
-        <TableCell sx={{ display: 'flex', alignItems: 'center' }}>
-          <ListItemText
-            primary={name}
-            secondary={email}
-            primaryTypographyProps={{ typography: 'body2' }}
-            secondaryTypographyProps={{
-              component: 'span',
-              color: 'text.disabled',
-            }}
-          />
+        <TableCell sx={{ whiteSpace: 'nowrap' }}>{title}</TableCell>
+
+        <TableCell>{description}</TableCell>
+        <TableCell sx={{ whiteSpace: 'nowrap' }}>{location}</TableCell>
+
+        <TableCell sx={{ whiteSpace: 'nowrap' }}>
+          <Avatar alt={title} src={image} variant="rounded" sx={{ width: 64, height: 64 }} />
         </TableCell>
 
-        <TableCell sx={{ whiteSpace: 'nowrap' }}>{phone_number}</TableCell>
-
-        <TableCell sx={{ whiteSpace: 'nowrap' }}>{user_name}</TableCell>
-
-        <TableCell sx={{ whiteSpace: 'nowrap' }}>{email}</TableCell>
+        <TableCell sx={{ whiteSpace: 'nowrap' }}>
+          {format(new Date(created_at), 'dd/MM/yyyy')}
+        </TableCell>
 
         <TableCell align="right" sx={{ px: 1, whiteSpace: 'nowrap' }}>
           <IconButton color={popover.open ? 'inherit' : 'default'} onClick={popover.onOpen}>
@@ -63,8 +56,6 @@ export default function UserTableRow({
           </IconButton>
         </TableCell>
       </TableRow>
-
-      <UserQuickEditForm currentUser={row} open={quickEdit.value} onClose={quickEdit.onFalse} />
 
       <CustomPopover
         open={popover.open}

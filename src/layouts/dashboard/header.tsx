@@ -13,10 +13,10 @@ import Logo from 'src/components/logo';
 import SvgColor from 'src/components/svg-color';
 import { useSettingsContext } from 'src/components/settings';
 
-import Searchbar from '../common/searchbar';
+// import Searchbar from '../common/searchbar';
 import { NAV, HEADER } from '../config-layout';
 import AccountPopover from '../common/account-popover';
-import LanguagePopover from '../common/language-popover';
+// import LanguagePopover from '../common/language-popover';
 
 type Props = {
   onOpenNav?: VoidFunction;
@@ -47,7 +47,7 @@ export default function Header({ onOpenNav }: Props) {
         </IconButton>
       )}
 
-      <Searchbar />
+      {/* <Searchbar /> */}
 
       <Stack
         flexGrow={1}
@@ -56,7 +56,7 @@ export default function Header({ onOpenNav }: Props) {
         justifyContent="flex-end"
         spacing={{ xs: 0.5, sm: 1 }}
       >
-        <LanguagePopover />
+        {/* <LanguagePopover /> */}
 
         <AccountPopover />
       </Stack>

@@ -1,259 +1,320 @@
-import orderBy from 'lodash/orderBy';
-import { useState, useCallback } from 'react';
+import isEqual from 'lodash/isEqual';
+import { useState, useEffect, useCallback } from 'react';
 
-import Stack from '@mui/material/Stack';
+import Card from '@mui/material/Card';
+import Table from '@mui/material/Table';
 import Button from '@mui/material/Button';
+import Tooltip from '@mui/material/Tooltip';
 import Container from '@mui/material/Container';
+import TableBody from '@mui/material/TableBody';
+import IconButton from '@mui/material/IconButton';
+import TableContainer from '@mui/material/TableContainer';
 
 import { paths } from 'src/routes/paths';
+import { useRouter } from 'src/routes/hooks';
 import { RouterLink } from 'src/routes/components';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
-import { isAfter, isBetween } from 'src/utils/format-time';
-
-import { countries } from 'src/assets/data';
-import { _tours, _tourGuides, TOUR_SORT_OPTIONS, TOUR_SERVICE_OPTIONS } from 'src/_mock';
+import axios from 'src/utils/axios';
 
 import Iconify from 'src/components/iconify';
-import EmptyContent from 'src/components/empty-content';
+import Scrollbar from 'src/components/scrollbar';
+import { useSnackbar } from 'src/components/snackbar';
+import { ConfirmDialog } from 'src/components/custom-dialog';
 import { useSettingsContext } from 'src/components/settings';
 import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
+import {
+  useTable,
+  emptyRows,
+  TableNoData,
+  getComparator,
+  TableEmptyRows,
+  TableHeadCustom,
+  TableSelectedAction,
+  TablePaginationCustom,
+} from 'src/components/table';
 
-import { ITourItem, ITourFilters, ITourFilterValue } from 'src/types/tour';
+import { IUserTableFilters } from 'src/types/user';
 
-import TourList from '../tour-list';
-import TourSort from '../tour-sort';
-import TourSearch from '../tour-search';
-import TourFilters from '../tour-filters';
-import TourFiltersResult from '../tour-filters-result';
+import TourTableRow from '../tour-table-row';
+import TourTableToolbar from '../tour-table-toolbar';
 
-// ----------------------------------------------------------------------
+const TABLE_HEAD = [
+  { id: 'name', label: 'Title', width: 250 },
+  { id: 'description', label: 'Description', width: 400 },
+  { id: 'location', label: 'Location', width: 250 },
+  { id: 'price', label: 'Price' },
+  { id: 'start_time', label: 'Start time' },
+  { id: 'end_time', label: 'End time' },
+  { id: 'image', label: 'Image' },
+  { id: '', width: 88 },
+];
 
-const defaultFilters: ITourFilters = {
-  destination: [],
-  tourGuides: [],
-  services: [],
-  startDate: null,
-  endDate: null,
+const defaultFilters: IUserTableFilters = {
+  name: '',
+  role: [],
+  status: 'all',
 };
 
-// ----------------------------------------------------------------------
-
 export default function TourListView() {
+  const { enqueueSnackbar } = useSnackbar();
+
+  useEffect(() => {
+    async function getList() {
+      const response = await axios.get('/tour/list');
+      if (response.data.status) {
+        setTableData(response.data.data);
+      } else {
+        setTableData([]);
+      }
+    }
+
+    getList();
+  }, []);
+
+  const table = useTable();
+
   const settings = useSettingsContext();
 
-  const openFilters = useBoolean();
+  const router = useRouter();
 
-  const [sortBy, setSortBy] = useState('latest');
+  const confirm = useBoolean();
 
-  const [search, setSearch] = useState<{ query: string; results: ITourItem[] }>({
-    query: '',
-    results: [],
-  });
+  const [tableData, setTableData] = useState<any[]>([]);
 
   const [filters, setFilters] = useState(defaultFilters);
 
-  const dateError = isAfter(filters.startDate, filters.endDate);
-
   const dataFiltered = applyFilter({
-    inputData: _tours,
+    inputData: tableData,
+    comparator: getComparator(table.order, table.orderBy),
     filters,
-    sortBy,
-    dateError,
   });
 
-  const canReset =
-    !!filters.destination.length ||
-    !!filters.tourGuides.length ||
-    !!filters.services.length ||
-    (!!filters.startDate && !!filters.endDate);
+  const dataInPage = dataFiltered.slice(
+    table.page * table.rowsPerPage,
+    table.page * table.rowsPerPage + table.rowsPerPage
+  );
 
-  const notFound = !dataFiltered.length && canReset;
+  const denseHeight = table.dense ? 56 : 56 + 20;
 
-  const handleFilters = useCallback((name: string, value: ITourFilterValue) => {
-    setFilters((prevState) => ({
-      ...prevState,
-      [name]: value,
-    }));
-  }, []);
+  const canReset = !isEqual(defaultFilters, filters);
 
-  const handleResetFilters = useCallback(() => {
-    setFilters(defaultFilters);
-  }, []);
+  const notFound = (!dataFiltered.length && canReset) || !dataFiltered.length;
 
-  const handleSortBy = useCallback((newValue: string) => {
-    setSortBy(newValue);
-  }, []);
-
-  const handleSearch = useCallback(
-    (inputValue: string) => {
-      setSearch((prevState) => ({
+  const handleFilters = useCallback(
+    (name: string, value: any) => {
+      table.onResetPage();
+      setFilters((prevState) => ({
         ...prevState,
-        query: inputValue,
+        [name]: value,
       }));
-
-      if (inputValue) {
-        const results = _tours.filter(
-          (tour) => tour.name.toLowerCase().indexOf(search.query.toLowerCase()) !== -1
-        );
-
-        setSearch((prevState) => ({
-          ...prevState,
-          results,
-        }));
-      }
     },
-    [search.query]
+    [table]
   );
 
-  const renderFilters = (
-    <Stack
-      spacing={3}
-      justifyContent="space-between"
-      alignItems={{ xs: 'flex-end', sm: 'center' }}
-      direction={{ xs: 'column', sm: 'row' }}
-    >
-      <TourSearch
-        query={search.query}
-        results={search.results}
-        onSearch={handleSearch}
-        hrefItem={(id: string) => paths.dashboard.tour.details(id)}
-      />
+  const handleDeleteRow = useCallback(
+    async (id: string) => {
+      const deleteRow = tableData.filter((row) => row.tour_id !== id);
 
-      <Stack direction="row" spacing={1} flexShrink={0}>
-        <TourFilters
-          open={openFilters.value}
-          onOpen={openFilters.onTrue}
-          onClose={openFilters.onFalse}
-          //
-          filters={filters}
-          onFilters={handleFilters}
-          //
-          canReset={canReset}
-          onResetFilters={handleResetFilters}
-          //
-          serviceOptions={TOUR_SERVICE_OPTIONS.map((option) => option.label)}
-          tourGuideOptions={_tourGuides}
-          destinationOptions={countries.map((option) => option.label)}
-          //
-          dateError={dateError}
-        />
+      enqueueSnackbar('Delete success!');
 
-        <TourSort sort={sortBy} onSort={handleSortBy} sortOptions={TOUR_SORT_OPTIONS} />
-      </Stack>
-    </Stack>
+      setTableData(deleteRow);
+
+      table.onUpdatePageDeleteRow(dataInPage.length);
+
+      await axios.post('/tour/delete', { id });
+    },
+    [dataInPage.length, enqueueSnackbar, table, tableData]
   );
 
-  const renderResults = (
-    <TourFiltersResult
-      filters={filters}
-      onResetFilters={handleResetFilters}
-      //
-      canReset={canReset}
-      onFilters={handleFilters}
-      //
-      results={dataFiltered.length}
-    />
+  const handleDeleteRows = useCallback(() => {
+    const deleteRows = tableData.filter((row) => !table.selected.includes(row.id));
+
+    enqueueSnackbar('Delete success!');
+
+    setTableData(deleteRows);
+
+    table.onUpdatePageDeleteRows({
+      totalRowsInPage: dataInPage.length,
+      totalRowsFiltered: dataFiltered.length,
+    });
+  }, [dataFiltered.length, dataInPage.length, enqueueSnackbar, table, tableData]);
+
+  const handleEditRow = useCallback(
+    (id: string) => {
+      router.push(paths.dashboard.tour.edit(id));
+    },
+    [router]
   );
 
   return (
-    <Container maxWidth={settings.themeStretch ? false : 'lg'}>
-      <CustomBreadcrumbs
-        heading="List"
-        links={[
-          { name: 'Dashboard', href: paths.dashboard.root },
-          {
-            name: 'Tour',
-            href: paths.dashboard.tour.root,
-          },
-          { name: 'List' },
-        ]}
+    <>
+      <Container maxWidth={settings.themeStretch ? false : 'lg'}>
+        <CustomBreadcrumbs
+          heading="List"
+          links={[
+            { name: 'Dashboard', href: paths.dashboard.root },
+            { name: 'Tour', href: paths.dashboard.tour.root },
+            { name: 'List' },
+          ]}
+          action={
+            <Button
+              component={RouterLink}
+              href={paths.dashboard.tour.new}
+              variant="contained"
+              startIcon={<Iconify icon="mingcute:add-line" />}
+            >
+              New Tour
+            </Button>
+          }
+          sx={{
+            mb: { xs: 3, md: 5 },
+          }}
+        />
+
+        <Card>
+          <TourTableToolbar filters={filters} onFilters={handleFilters} />
+
+          <TableContainer sx={{ position: 'relative', overflow: 'unset' }}>
+            <TableSelectedAction
+              dense={table.dense}
+              numSelected={table.selected.length}
+              rowCount={dataFiltered.length}
+              onSelectAllRows={(checked) =>
+                table.onSelectAllRows(
+                  checked,
+                  dataFiltered.map((row) => row.id)
+                )
+              }
+              action={
+                <Tooltip title="Delete">
+                  <IconButton color="primary" onClick={confirm.onTrue}>
+                    <Iconify icon="solar:trash-bin-trash-bold" />
+                  </IconButton>
+                </Tooltip>
+              }
+            />
+
+            <Scrollbar>
+              <Table size={table.dense ? 'small' : 'medium'} sx={{ minWidth: 960 }}>
+                <TableHeadCustom
+                  order={table.order}
+                  orderBy={table.orderBy}
+                  headLabel={TABLE_HEAD}
+                  rowCount={dataFiltered.length}
+                  numSelected={table.selected.length}
+                  onSort={table.onSort}
+                  onSelectAllRows={(checked) =>
+                    table.onSelectAllRows(
+                      checked,
+                      dataFiltered.map((row) => row.id)
+                    )
+                  }
+                />
+
+                <TableBody>
+                  {dataFiltered
+                    .slice(
+                      table.page * table.rowsPerPage,
+                      table.page * table.rowsPerPage + table.rowsPerPage
+                    )
+                    .map((row) => (
+                      <TourTableRow
+                        key={row?.tour_id}
+                        row={row}
+                        selected={table.selected.includes(row?.tour_id)}
+                        onSelectRow={() => table.onSelectRow(row?.tour_id)}
+                        onDeleteRow={() => handleDeleteRow(row?.tour_id)}
+                        onEditRow={() => handleEditRow(row?.tour_id)}
+                      />
+                    ))}
+
+                  <TableEmptyRows
+                    height={denseHeight}
+                    emptyRows={emptyRows(table.page, table.rowsPerPage, dataFiltered.length)}
+                  />
+
+                  <TableNoData notFound={notFound} />
+                </TableBody>
+              </Table>
+            </Scrollbar>
+          </TableContainer>
+
+          <TablePaginationCustom
+            count={dataFiltered.length}
+            page={table.page}
+            rowsPerPage={table.rowsPerPage}
+            onPageChange={table.onChangePage}
+            onRowsPerPageChange={table.onChangeRowsPerPage}
+            dense={table.dense}
+            onChangeDense={table.onChangeDense}
+          />
+        </Card>
+      </Container>
+
+      <ConfirmDialog
+        open={confirm.value}
+        onClose={confirm.onFalse}
+        title="Delete"
+        content={
+          <>
+            Are you sure want to delete <strong> {table.selected.length} </strong> items?
+          </>
+        }
         action={
           <Button
-            component={RouterLink}
-            href={paths.dashboard.tour.new}
             variant="contained"
-            startIcon={<Iconify icon="mingcute:add-line" />}
+            color="error"
+            onClick={() => {
+              handleDeleteRows();
+              confirm.onFalse();
+            }}
           >
-            New Tour
+            Delete
           </Button>
         }
-        sx={{
-          mb: { xs: 3, md: 5 },
-        }}
       />
-
-      <Stack
-        spacing={2.5}
-        sx={{
-          mb: { xs: 3, md: 5 },
-        }}
-      >
-        {renderFilters}
-
-        {canReset && renderResults}
-      </Stack>
-
-      {notFound && <EmptyContent title="No Data" filled sx={{ py: 10 }} />}
-
-      <TourList tours={dataFiltered} />
-    </Container>
+    </>
   );
 }
 
 // ----------------------------------------------------------------------
 
-const applyFilter = ({
+function applyFilter({
   inputData,
+  comparator,
   filters,
-  sortBy,
-  dateError,
 }: {
-  inputData: ITourItem[];
-  filters: ITourFilters;
-  sortBy: string;
-  dateError: boolean;
-}) => {
-  const { services, destination, startDate, endDate, tourGuides } = filters;
+  inputData: any[];
+  comparator: (a: any, b: any) => number;
+  filters: IUserTableFilters;
+}) {
+  const { name, status, role } = filters;
 
-  const tourGuideIds = tourGuides.map((tourGuide) => tourGuide.id);
+  const stabilizedThis = inputData.map((el, index) => [el, index] as const);
 
-  // SORT BY
-  if (sortBy === 'latest') {
-    inputData = orderBy(inputData, ['createdAt'], ['desc']);
-  }
+  stabilizedThis.sort((a, b) => {
+    const order = comparator(a[0], b[0]);
+    if (order !== 0) return order;
+    return a[1] - b[1];
+  });
 
-  if (sortBy === 'oldest') {
-    inputData = orderBy(inputData, ['createdAt'], ['asc']);
-  }
+  inputData = stabilizedThis.map((el) => el[0]);
 
-  if (sortBy === 'popular') {
-    inputData = orderBy(inputData, ['totalViews'], ['desc']);
-  }
-
-  // FILTERS
-  if (destination.length) {
-    inputData = inputData.filter((tour) => destination.includes(tour.destination));
-  }
-
-  if (tourGuideIds.length) {
-    inputData = inputData.filter((tour) =>
-      tour.tourGuides.some((filterItem) => tourGuideIds.includes(filterItem.id))
+  if (name) {
+    inputData = inputData.filter(
+      (user) => user.name.toLowerCase().indexOf(name.toLowerCase()) !== -1
     );
   }
 
-  if (services.length) {
-    inputData = inputData.filter((tour) => tour.services.some((item) => services.includes(item)));
+  if (status !== 'all') {
+    inputData = inputData.filter((user) => user.status === status);
   }
 
-  if (!dateError) {
-    if (startDate && endDate) {
-      inputData = inputData.filter((tour) =>
-        isBetween(startDate, tour.available.startDate, tour.available.endDate)
-      );
-    }
+  if (role.length) {
+    inputData = inputData.filter((user) => role.includes(user.role));
   }
 
   return inputData;
-};
+}
