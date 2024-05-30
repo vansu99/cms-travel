@@ -24,6 +24,11 @@ const TourListPage = lazy(() => import('src/pages/dashboard/tour/list'));
 const TourCreatePage = lazy(() => import('src/pages/dashboard/tour/new'));
 const TourEditPage = lazy(() => import('src/pages/dashboard/tour/edit'));
 
+// BOOKING
+const BookingListPage = lazy(() => import('src/pages/dashboard/booking/list'));
+const BookingCreatePage = lazy(() => import('src/pages/dashboard/booking/new'));
+const BookingEditPage = lazy(() => import('src/pages/dashboard/booking/edit'));
+
 export const dashboardRoutes = [
   {
     path: 'dashboard',
@@ -65,6 +70,15 @@ export const dashboardRoutes = [
           { path: ':id', element: <TourDetailsPage /> },
           { path: 'new', element: <TourCreatePage /> },
           { path: ':id/edit', element: <TourEditPage /> },
+        ],
+      },
+      {
+        path: 'booking',
+        children: [
+          { element: <BookingListPage />, index: true },
+          { path: 'list', element: <BookingListPage /> },
+          { path: 'new', element: <BookingCreatePage /> },
+          { path: ':id/edit', element: <BookingEditPage /> },
         ],
       },
     ],

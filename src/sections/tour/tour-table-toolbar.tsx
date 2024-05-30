@@ -19,7 +19,7 @@ export default function TourTableToolbar({ filters, onFilters }: Props) {
 
   const handleFilterName = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      onFilters('title', event.target.value);
+      onFilters('name', event.target.value);
     },
     [onFilters]
   );

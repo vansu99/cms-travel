@@ -42,9 +42,10 @@ import TourTableToolbar from '../tour-table-toolbar';
 
 const TABLE_HEAD = [
   { id: 'name', label: 'Title', width: 250 },
-  { id: 'description', label: 'Description', width: 400 },
+  { id: 'description', label: 'Description', width: 300 },
   { id: 'location', label: 'Location', width: 250 },
-  { id: 'price', label: 'Price' },
+  { id: 'price_adult', label: 'Price adult' },
+  { id: 'price_child', label: 'Price children' },
   { id: 'start_time', label: 'Start time' },
   { id: 'end_time', label: 'End time' },
   { id: 'image', label: 'Image' },

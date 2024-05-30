@@ -78,9 +78,19 @@ export function useNavData() {
             icon: ICONS.tour,
             children: [
               { title: t('list'), path: paths.dashboard.tour.root },
-              { title: t('details'), path: paths.dashboard.tour.demo.details },
+              // { title: t('details'), path: paths.dashboard.tour.demo.details },
               { title: t('create'), path: paths.dashboard.tour.new },
               // { title: t('edit'), path: paths.dashboard.tour.demo.edit },
+            ],
+          },
+          // BOOKING
+          {
+            title: 'Booking',
+            path: paths.dashboard.booking.root,
+            icon: ICONS.tour,
+            children: [
+              { title: t('list'), path: paths.dashboard.booking.root },
+              // { title: t('create'), path: paths.dashboard.booking.new },
             ],
           },
         ],

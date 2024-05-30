@@ -1,11 +1,11 @@
 import { format } from 'date-fns';
 
 import Button from '@mui/material/Button';
-import Avatar from '@mui/material/Avatar';
 import MenuItem from '@mui/material/MenuItem';
 import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
 import IconButton from '@mui/material/IconButton';
+import Typography from '@mui/material/Typography';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
@@ -17,18 +17,11 @@ type Props = {
   selected: boolean;
   onEditRow: VoidFunction;
   row: any;
-  onSelectRow: VoidFunction;
   onDeleteRow: VoidFunction;
 };
 
-export default function TourTableRow({
-  row,
-  selected,
-  onEditRow,
-  onSelectRow,
-  onDeleteRow,
-}: Props) {
-  const { name, price_adult, price_child, start_time, end_time, image, description, location } =
+export default function TourTableRow({ row, selected, onEditRow, onDeleteRow }: Props) {
+  const { person_quantity, tour_regis_id, status, tour, price, customer, start_date, end_date } =
     row;
 
   const confirm = useBoolean();
@@ -38,19 +31,24 @@ export default function TourTableRow({
   return (
     <>
       <TableRow hover selected={selected}>
-        <TableCell>{name}</TableCell>
-        <TableCell>{description}</TableCell>
-        <TableCell>{location}</TableCell>
-        <TableCell sx={{ whiteSpace: 'nowrap' }}>{price_adult?.toLocaleString('vi-VN')}₫</TableCell>
-        <TableCell sx={{ whiteSpace: 'nowrap' }}>{price_child?.toLocaleString('vi-VN')}₫</TableCell>
+        <TableCell>{tour_regis_id}</TableCell>
+        <TableCell>{tour?.name}</TableCell>
+        <TableCell>{tour?.location}</TableCell>
+        <TableCell sx={{ whiteSpace: 'nowrap' }}>{price?.toLocaleString('vi-VN')}₫</TableCell>
+        <TableCell>{person_quantity}</TableCell>
+        <TableCell>{customer?.name}</TableCell>
+        <TableCell>{customer?.phone_number}</TableCell>
+        <TableCell>{customer?.email}</TableCell>
         <TableCell sx={{ whiteSpace: 'nowrap' }}>
-          {format(new Date(start_time), 'dd/MM/yyyy')}
+          {format(new Date(start_date), 'dd/MM/yyyy')}
         </TableCell>
         <TableCell sx={{ whiteSpace: 'nowrap' }}>
-          {format(new Date(end_time), 'dd/MM/yyyy')}
+          {format(new Date(end_date), 'dd/MM/yyyy')}
         </TableCell>
-        <TableCell sx={{ whiteSpace: 'nowrap' }}>
-          <Avatar alt={name} src={image} variant="rounded" sx={{ width: 64, height: 64 }} />
+        <TableCell>
+          <Typography sx={{ color: status === 'WAITING' ? '#FFBF00' : '#40A578' }}>
+            {status}
+          </Typography>
         </TableCell>
         <TableCell align="right" sx={{ px: 1, whiteSpace: 'nowrap' }}>
           <IconButton color={popover.open ? 'inherit' : 'default'} onClick={popover.onOpen}>
@@ -65,7 +63,7 @@ export default function TourTableRow({
         arrow="right-top"
         sx={{ width: 140 }}
       >
-        <MenuItem
+        {/* <MenuItem
           onClick={() => {
             confirm.onTrue();
             popover.onClose();
@@ -74,7 +72,7 @@ export default function TourTableRow({
         >
           <Iconify icon="solar:trash-bin-trash-bold" />
           Delete
-        </MenuItem>
+        </MenuItem> */}
 
         <MenuItem
           onClick={() => {

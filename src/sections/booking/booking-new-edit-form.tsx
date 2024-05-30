@@ -19,13 +19,24 @@ import { useResponsive } from 'src/hooks/use-responsive';
 import axios from 'src/utils/axios';
 
 import { useSnackbar } from 'src/components/snackbar';
-import FormProvider, { RHFEditor, RHFTextField } from 'src/components/hook-form';
+import FormProvider, { RHFSelect, RHFTextField } from 'src/components/hook-form';
 
 type Props = {
-  currentTour?: any;
+  currentBooking?: any;
 };
 
-export default function TourNewEditForm({ currentTour }: Props) {
+const statusList = [
+  {
+    label: 'Done',
+    value: 'DONE',
+  },
+  {
+    label: 'Waiting',
+    value: 'WAITING',
+  },
+];
+
+export default function TourNewEditForm({ currentBooking }: Props) {
   const router = useRouter();
 
   const mdUp = useResponsive('up', 'md');
@@ -33,36 +44,30 @@ export default function TourNewEditForm({ currentTour }: Props) {
   const { enqueueSnackbar } = useSnackbar();
 
   const NewTourSchema = Yup.object().shape({
-    name: Yup.string().required('Title is required'),
-    location: Yup.string().required('Location is required'),
-    price_adult: Yup.string()
-      .required('Price adult is required')
-      .test('price-number', 'The field is invalid', (value) => Number(value) > 0),
-    price_child: Yup.string()
-      .required('Price children is required')
-      .test('price-number', 'The field is invalid', (value) => Number(value) > 0),
-    description: Yup.string().required('Description is required'),
-    start_time: Yup.mixed<any>().nullable().required('Start date is required'),
-    end_time: Yup.mixed<any>()
-      .required('End date is required')
-      .test(
-        'date-min',
-        'End date must be later than create date',
-        (value, { parent }) => value.getTime() > parent.start_time.getTime()
-      ),
+    customer_name: Yup.string(),
+    location: Yup.string(),
+    price: Yup.string(),
+    tour_name: Yup.string(),
+    phone_number: Yup.string(),
+    email: Yup.string(),
+    start_time: Yup.mixed<any>(),
+    end_time: Yup.mixed<any>(),
+    status: Yup.string(),
   });
 
   const defaultValues = useMemo(
     () => ({
-      name: currentTour?.name || '',
-      location: currentTour?.location || '',
-      price_adult: currentTour?.price_adult || '',
-      price_child: currentTour?.price_child || '',
-      description: currentTour?.description || '',
-      start_time: new Date(currentTour?.start_time) || new Date(),
-      end_time: new Date(currentTour?.end_time) || null,
+      customer_name: currentBooking?.customer?.name || '',
+      location: currentBooking?.tour?.location || '',
+      tour_name: currentBooking?.tour?.name || '',
+      phone_number: currentBooking?.customer?.phone_number || '',
+      email: currentBooking?.customer?.email || '',
+      price: currentBooking?.price || '',
+      start_time: new Date(currentBooking?.start_date) || new Date(),
+      end_time: new Date(currentBooking?.end_date) || null,
+      status: currentBooking?.status || statusList[1].value,
     }),
-    [currentTour]
+    [currentBooking]
   );
 
   const methods = useForm<any>({
@@ -78,31 +83,32 @@ export default function TourNewEditForm({ currentTour }: Props) {
   } = methods;
 
   useEffect(() => {
-    if (currentTour) {
+    if (currentBooking) {
       reset(defaultValues);
     }
-  }, [currentTour, defaultValues, reset]);
+  }, [currentBooking, defaultValues, reset]);
 
   const onSubmit = handleSubmit(async (data) => {
     try {
       let payload = null as any;
 
-      if (currentTour) {
-        payload = { ...data, image: currentTour?.image || '', tour_id: currentTour?.tour_id };
+      if (currentBooking) {
+        payload = { status: data?.status, id: currentBooking?.tour_regis_id };
       } else {
         payload = {
           ...data,
-          image:
-            'https://bcp.cdnchinhphu.vn/344443456812359680/2022/12/27/nhattrang3-16721128389061596602579.jpg',
         };
       }
 
-      const response = await axios.post(currentTour ? '/tour/update' : '/tour/create', payload);
+      const response = await axios.post(
+        currentBooking ? '/tour-regis/update-status' : '/tour-regis/create',
+        payload
+      );
 
       if (response.data.status) {
         reset();
-        enqueueSnackbar(currentTour ? 'Update success!' : 'Create success!');
-        router.push(paths.dashboard.tour.root);
+        enqueueSnackbar(currentBooking ? 'Update success!' : 'Create success!');
+        router.push(paths.dashboard.booking.root);
       }
     } catch (error) {
       console.error(error);
@@ -117,7 +123,7 @@ export default function TourNewEditForm({ currentTour }: Props) {
             Details
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            Title, short description, image...
+            Title, short description, ...
           </Typography>
         </Grid>
       )}
@@ -127,15 +133,12 @@ export default function TourNewEditForm({ currentTour }: Props) {
           {!mdUp && <CardHeader title="Details" />}
 
           <Stack spacing={3} sx={{ p: 3 }}>
-            <RHFTextField name="name" label="Tour Title" />
-            <RHFTextField name="location" label="Location" />
-            <RHFTextField type="number" name="price_adult" label="Price adult" />
-            <RHFTextField type="number" name="price_child" label="Price children" />
-            <Stack spacing={1.5}>
-              <Typography variant="subtitle2">Description</Typography>
-              <RHFEditor simple name="description" />
-            </Stack>
-            {/* <RHFTextField name="description" label="Description" multiline rows={5} /> */}
+            <RHFTextField name="customer_name" label="Customer name" disabled />
+            <RHFTextField name="phone_number" label="Customer phone number" disabled />
+            <RHFTextField name="email" label="Customer mail" disabled />
+            <RHFTextField name="tour_name" label="Tour name" disabled />
+            <RHFTextField name="location" label="Tour location" disabled />
+            <RHFTextField type="number" name="price" label="Price" disabled />
             <Controller
               name="start_time"
               control={control}
@@ -143,6 +146,7 @@ export default function TourNewEditForm({ currentTour }: Props) {
                 <DatePicker
                   label="Date start"
                   value={field.value}
+                  disabled
                   onChange={(newValue) => {
                     field.onChange(newValue);
                   }}
@@ -161,6 +165,7 @@ export default function TourNewEditForm({ currentTour }: Props) {
               control={control}
               render={({ field, fieldState: { error } }) => (
                 <DatePicker
+                  disabled
                   label="Date end"
                   value={field.value}
                   onChange={(newValue) => {
@@ -176,6 +181,18 @@ export default function TourNewEditForm({ currentTour }: Props) {
                 />
               )}
             />
+            <RHFSelect
+              native
+              name="status"
+              label="Booking status"
+              InputLabelProps={{ shrink: true }}
+            >
+              {statusList.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </RHFSelect>
           </Stack>
         </Card>
       </Grid>
@@ -193,7 +210,7 @@ export default function TourNewEditForm({ currentTour }: Props) {
           loading={isSubmitting}
           sx={{ ml: 2 }}
         >
-          {!currentTour ? 'Create Tour' : 'Save Changes'}
+          {!currentBooking ? 'Create Tour' : 'Save Changes'}
         </LoadingButton>
       </Grid>
     </>

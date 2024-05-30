@@ -65,5 +65,10 @@ export const paths = {
         edit: `${ROOTS.DASHBOARD}/tour/${MOCK_ID}/edit`,
       },
     },
+    booking: {
+      root: `${ROOTS.DASHBOARD}/booking`,
+      new: `${ROOTS.DASHBOARD}/booking/new`,
+      edit: (id: string) => `${ROOTS.DASHBOARD}/booking/${id}/edit`,
+    },
   },
 };

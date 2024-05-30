@@ -11,10 +11,10 @@ type Props = {
   onFilters: (name: string, value: any) => void;
 };
 
-export default function PostTableToolbar({ filters, onFilters }: Props) {
+export default function TourTableToolbar({ filters, onFilters }: Props) {
   const handleFilterName = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      onFilters('title', event.target.value);
+      onFilters('customer_name', event.target.value);
     },
     [onFilters]
   );
@@ -35,7 +35,7 @@ export default function PostTableToolbar({ filters, onFilters }: Props) {
       <Stack direction="row" alignItems="center" spacing={2} sx={{ width: '25rem' }}>
         <TextField
           fullWidth
-          value={filters.title}
+          value={filters.customer_name}
           onChange={handleFilterName}
           placeholder="Search..."
           InputProps={{

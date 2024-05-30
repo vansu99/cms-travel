@@ -12,7 +12,6 @@ import TableContainer from '@mui/material/TableContainer';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
-import { RouterLink } from 'src/routes/components';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
@@ -37,16 +36,22 @@ import {
 
 import { IUserTableFilters } from 'src/types/user';
 
-import PostTableRow from '../post-table-row';
-import PostTableToolbar from '../post-table-toolbar';
+import TourTableRow from '../booking-table-row';
+import TourTableToolbar from '../booking-table-toolbar';
 
 const TABLE_HEAD = [
-  { id: 'title', label: 'Title', width: 250 },
-  { id: 'description', label: 'Description', width: 400 },
-  { id: 'location', label: 'Location', width: 250 },
-  { id: 'image', label: 'Image' },
-  { id: 'created_at', label: 'Publish date' },
-  { id: '', width: 88 },
+  { id: 'tour_regis_id', label: 'Booking No', width: 120 },
+  { id: 'name', label: 'Title tour', width: 120 },
+  { id: 'location', label: 'Location tour', width: 260 },
+  { id: 'price', label: 'Price tour' },
+  { id: 'person_quantity', label: 'Participants' },
+  { id: 'customer_name', label: 'Customer name' },
+  { id: 'customer_phone', label: 'Customer phone number' },
+  { id: 'customer_email', label: 'Customer mail' },
+  { id: 'start_time', label: 'Start time' },
+  { id: 'end_time', label: 'End time' },
+  { id: 'status', label: 'Status' },
+  { id: '', width: 60 },
 ];
 
 const defaultFilters: IUserTableFilters = {
@@ -55,21 +60,8 @@ const defaultFilters: IUserTableFilters = {
   status: 'all',
 };
 
-export default function PostListView() {
+export default function TourListView() {
   const { enqueueSnackbar } = useSnackbar();
-
-  useEffect(() => {
-    async function getList() {
-      const response = await axios.get('/advertise/list');
-      if (response.data.status) {
-        setTableData(response.data.data);
-      } else {
-        setTableData([]);
-      }
-    }
-
-    getList();
-  }, []);
 
   const table = useTable();
 
@@ -82,6 +74,19 @@ export default function PostListView() {
   const [tableData, setTableData] = useState<any[]>([]);
 
   const [filters, setFilters] = useState(defaultFilters);
+
+  useEffect(() => {
+    async function getList() {
+      const response = await axios.get(`/tour-regis/list`);
+      if (response.data.status) {
+        setTableData(response.data.data);
+      } else {
+        setTableData([]);
+      }
+    }
+
+    getList();
+  }, []);
 
   const dataFiltered = applyFilter({
     inputData: tableData,
@@ -113,7 +118,7 @@ export default function PostListView() {
 
   const handleDeleteRow = useCallback(
     async (id: string) => {
-      const deleteRow = tableData.filter((row) => row.advertise_id !== id);
+      const deleteRow = tableData.filter((row) => row.tour_id !== id);
 
       enqueueSnackbar('Delete success!');
 
@@ -121,7 +126,7 @@ export default function PostListView() {
 
       table.onUpdatePageDeleteRow(dataInPage.length);
 
-      await axios.post('/advertise/delete', { id });
+      await axios.post('/tour-regis/delete', { id });
     },
     [dataInPage.length, enqueueSnackbar, table, tableData]
   );
@@ -141,8 +146,7 @@ export default function PostListView() {
 
   const handleEditRow = useCallback(
     (id: string) => {
-      console.log('first', id);
-      router.push(paths.dashboard.post.edit(id));
+      router.push(paths.dashboard.booking.edit(id));
     },
     [router]
   );
@@ -154,26 +158,13 @@ export default function PostListView() {
           heading="List"
           links={[
             { name: 'Dashboard', href: paths.dashboard.root },
-            { name: 'Post', href: paths.dashboard.post.root },
+            { name: 'Booking', href: paths.dashboard.booking.root },
             { name: 'List' },
           ]}
-          action={
-            <Button
-              component={RouterLink}
-              href={paths.dashboard.post.new}
-              variant="contained"
-              startIcon={<Iconify icon="mingcute:add-line" />}
-            >
-              New Post
-            </Button>
-          }
-          sx={{
-            mb: { xs: 3, md: 5 },
-          }}
         />
 
         <Card>
-          <PostTableToolbar filters={filters} onFilters={handleFilters} />
+          <TourTableToolbar filters={filters} onFilters={handleFilters} />
 
           <TableContainer sx={{ position: 'relative', overflow: 'unset' }}>
             <TableSelectedAction
@@ -219,13 +210,12 @@ export default function PostListView() {
                       table.page * table.rowsPerPage + table.rowsPerPage
                     )
                     .map((row) => (
-                      <PostTableRow
-                        key={row?.advertise_id}
+                      <TourTableRow
+                        key={row?.tour_regis_id}
                         row={row}
-                        selected={table.selected.includes(row?.advertise_id)}
-                        onSelectRow={() => table.onSelectRow(row?.advertise_id)}
-                        onDeleteRow={() => handleDeleteRow(row?.advertise_id)}
-                        onEditRow={() => handleEditRow(row?.advertise_id)}
+                        selected={table.selected.includes(row?.tour_regis_id)}
+                        onDeleteRow={() => handleDeleteRow(row?.tour_regis_id)}
+                        onEditRow={() => handleEditRow(row?.tour_regis_id)}
                       />
                     ))}
 
@@ -289,7 +279,7 @@ function applyFilter({
   comparator: (a: any, b: any) => number;
   filters: any;
 }) {
-  const { title, status, role } = filters;
+  const { status, customer_name, role } = filters;
 
   const stabilizedThis = inputData.map((el, index) => [el, index] as const);
 
@@ -301,9 +291,13 @@ function applyFilter({
 
   inputData = stabilizedThis.map((el) => el[0]);
 
-  if (title) {
+  if (customer_name) {
     inputData = inputData.filter(
-      (user) => user.title.toLowerCase().indexOf(title.toLowerCase()) !== -1
+      (item) =>
+        item.customer.name.toLowerCase().indexOf(customer_name.toLowerCase()) !== -1 ||
+        item.customer.phone_number.toLowerCase().indexOf(customer_name.toLowerCase()) !== -1 ||
+        item.customer.email.toLowerCase().indexOf(customer_name.toLowerCase()) !== -1 ||
+        item.tour_regis_id?.toString() === customer_name
     );
   }
 
