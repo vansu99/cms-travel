@@ -21,8 +21,7 @@ type Props = {
 };
 
 export default function TourTableRow({ row, selected, onEditRow, onDeleteRow }: Props) {
-  const { person_quantity, tour_regis_id, status, tour, price, customer, start_date, end_date } =
-    row;
+  const { person_quantity, tour_regis_id, status, tour, price, customer } = row;
 
   const confirm = useBoolean();
 
@@ -40,10 +39,10 @@ export default function TourTableRow({ row, selected, onEditRow, onDeleteRow }: 
         <TableCell>{customer?.phone_number}</TableCell>
         <TableCell>{customer?.email}</TableCell>
         <TableCell sx={{ whiteSpace: 'nowrap' }}>
-          {format(new Date(start_date), 'dd/MM/yyyy')}
+          {format(new Date(tour?.start_time), 'dd/MM/yyyy')}
         </TableCell>
         <TableCell sx={{ whiteSpace: 'nowrap' }}>
-          {format(new Date(end_date), 'dd/MM/yyyy')}
+          {format(new Date(tour?.end_time), 'dd/MM/yyyy')}
         </TableCell>
         <TableCell>
           <Typography sx={{ color: status === 'WAITING' ? '#FFBF00' : '#40A578' }}>
