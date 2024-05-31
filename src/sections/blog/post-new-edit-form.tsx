@@ -18,7 +18,7 @@ import { useResponsive } from 'src/hooks/use-responsive';
 import axios from 'src/utils/axios';
 
 import { useSnackbar } from 'src/components/snackbar';
-import FormProvider, { RHFTextField } from 'src/components/hook-form';
+import FormProvider, { RHFEditor, RHFTextField } from 'src/components/hook-form';
 
 type Props = {
   currentPost?: any;
@@ -111,7 +111,10 @@ export default function PostNewEditForm({ currentPost }: Props) {
           <Stack spacing={3} sx={{ p: 3 }}>
             <RHFTextField name="name" label="Post Title" />
             <RHFTextField name="location" label="Location" />
-            <RHFTextField name="description" label="Description" multiline rows={5} />
+            <Stack spacing={1.5}>
+              <Typography variant="subtitle2">Description</Typography>
+              <RHFEditor simple name="description" />
+            </Stack>
           </Stack>
         </Card>
       </Grid>
