@@ -28,7 +28,7 @@ export default function PostTableRow({
   onSelectRow,
   onDeleteRow,
 }: Props) {
-  const { created_at, title, image, description, location } = row;
+  const { created_at, title, image, location } = row;
 
   const confirm = useBoolean();
 
@@ -39,7 +39,6 @@ export default function PostTableRow({
       <TableRow hover selected={selected}>
         <TableCell sx={{ whiteSpace: 'nowrap' }}>{title}</TableCell>
 
-        <TableCell>{description}</TableCell>
         <TableCell sx={{ whiteSpace: 'nowrap' }}>{location}</TableCell>
 
         <TableCell sx={{ whiteSpace: 'nowrap' }}>

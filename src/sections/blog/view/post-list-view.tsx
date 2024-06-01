@@ -42,7 +42,6 @@ import PostTableToolbar from '../post-table-toolbar';
 
 const TABLE_HEAD = [
   { id: 'title', label: 'Title', width: 250 },
-  { id: 'description', label: 'Description', width: 400 },
   { id: 'location', label: 'Location', width: 250 },
   { id: 'image', label: 'Image' },
   { id: 'created_at', label: 'Publish date' },

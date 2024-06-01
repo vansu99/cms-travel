@@ -28,8 +28,7 @@ export default function TourTableRow({
   onSelectRow,
   onDeleteRow,
 }: Props) {
-  const { name, price_adult, price_child, start_time, end_time, image, description, location } =
-    row;
+  const { name, price_adult, price_child, start_time, end_time, image, location } = row;
 
   const confirm = useBoolean();
 
@@ -39,7 +38,6 @@ export default function TourTableRow({
     <>
       <TableRow hover selected={selected}>
         <TableCell>{name}</TableCell>
-        <TableCell>{description}</TableCell>
         <TableCell>{location}</TableCell>
         <TableCell sx={{ whiteSpace: 'nowrap' }}>{price_adult?.toLocaleString('vi-VN')}₫</TableCell>
         <TableCell sx={{ whiteSpace: 'nowrap' }}>{price_child?.toLocaleString('vi-VN')}₫</TableCell>

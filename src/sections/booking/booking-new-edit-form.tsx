@@ -34,6 +34,10 @@ const statusList = [
     label: 'Waiting',
     value: 'WAITING',
   },
+  {
+    label: 'Cancel',
+    value: 'CANCELLED',
+  },
 ];
 
 export default function TourNewEditForm({ currentBooking }: Props) {
