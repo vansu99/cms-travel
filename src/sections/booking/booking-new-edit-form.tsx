@@ -1,3 +1,4 @@
+/* eslint-disable no-nested-ternary */
 import * as Yup from 'yup';
 import { useMemo, useEffect } from 'react';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -97,17 +98,28 @@ export default function TourNewEditForm({ currentBooking }: Props) {
       let payload = null as any;
 
       if (currentBooking) {
-        payload = { status: data?.status, id: currentBooking?.tour_regis_id };
+        if (data?.status === 'CANCELLED') {
+          payload = {
+            status: data?.status,
+            id: currentBooking?.tour_regis_id,
+            customer_id: currentBooking?.customer?.customer_id,
+          };
+        } else {
+          payload = { status: data?.status, id: currentBooking?.tour_regis_id };
+        }
       } else {
         payload = {
           ...data,
         };
       }
 
-      const response = await axios.post(
-        currentBooking ? '/tour-regis/update-status' : '/tour-regis/create',
-        payload
-      );
+      const uriPost = currentBooking
+        ? data?.status === 'CANCELLED'
+          ? '/tour-regis/cancel'
+          : '/tour-regis/update-status'
+        : '/tour-regis/create';
+
+      const response = await axios.post(uriPost, payload);
 
       if (response.data.status) {
         reset();
