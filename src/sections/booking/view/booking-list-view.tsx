@@ -41,8 +41,8 @@ import TourTableToolbar from '../booking-table-toolbar';
 
 const TABLE_HEAD = [
   { id: 'tour_regis_id', label: 'Booking No', width: 120 },
-  { id: 'name', label: 'Title tour', width: 120 },
-  { id: 'location', label: 'Location tour', width: 260 },
+  { id: 'name', label: 'Title tour', width: 160 },
+  { id: 'location', label: 'Location tour', width: 150 },
   { id: 'price', label: 'Price tour' },
   { id: 'person_quantity', label: 'Participants' },
   { id: 'customer_name', label: 'Customer name' },

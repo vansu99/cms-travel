@@ -21,7 +21,7 @@ type Props = {
 };
 
 export default function TourTableRow({ row, selected, onEditRow, onDeleteRow }: Props) {
-  const { person_quantity, tour_regis_id, status, tour, price, customer } = row;
+  const { person_quantity, code, status, tour, total_price, customer } = row;
 
   const confirm = useBoolean();
 
@@ -30,10 +30,10 @@ export default function TourTableRow({ row, selected, onEditRow, onDeleteRow }: 
   return (
     <>
       <TableRow hover selected={selected}>
-        <TableCell>{tour_regis_id}</TableCell>
+        <TableCell>{code}</TableCell>
         <TableCell>{tour?.name}</TableCell>
         <TableCell>{tour?.location}</TableCell>
-        <TableCell sx={{ whiteSpace: 'nowrap' }}>{price?.toLocaleString('vi-VN')}₫</TableCell>
+        <TableCell sx={{ whiteSpace: 'nowrap' }}>{total_price?.toLocaleString('vi-VN')}₫</TableCell>
         <TableCell>{person_quantity}</TableCell>
         <TableCell>{customer?.name}</TableCell>
         <TableCell>{customer?.phone_number}</TableCell>
