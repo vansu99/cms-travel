@@ -1,5 +1,5 @@
 import isEqual from 'lodash/isEqual';
-import { useState, useEffect, useCallback } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 
 import Card from '@mui/material/Card';
 import Table from '@mui/material/Table';
@@ -17,6 +17,8 @@ import { RouterLink } from 'src/routes/components';
 import { useBoolean } from 'src/hooks/use-boolean';
 
 import axios from 'src/utils/axios';
+
+import { useAuthContext } from 'src/auth/hooks';
 
 import Iconify from 'src/components/iconify';
 import Scrollbar from 'src/components/scrollbar';
@@ -58,6 +60,8 @@ export default function UserListView() {
   const { enqueueSnackbar } = useSnackbar();
 
   const table = useTable();
+  const { user } = useAuthContext();
+  const isAdmin = useMemo(() => user?.role === 'admin', [user]);
 
   const settings = useSettingsContext();
 
@@ -157,14 +161,16 @@ export default function UserListView() {
             { name: 'List' },
           ]}
           action={
-            <Button
-              component={RouterLink}
-              href={paths.dashboard.user.new}
-              variant="contained"
-              startIcon={<Iconify icon="mingcute:add-line" />}
-            >
-              New User
-            </Button>
+            isAdmin ? (
+              <Button
+                component={RouterLink}
+                href={paths.dashboard.user.new}
+                variant="contained"
+                startIcon={<Iconify icon="mingcute:add-line" />}
+              >
+                New User
+              </Button>
+            ) : null
           }
           sx={{
             mb: { xs: 3, md: 5 },

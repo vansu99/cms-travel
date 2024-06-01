@@ -9,6 +9,8 @@ import IconButton from '@mui/material/IconButton';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
+import { useAuthContext } from 'src/auth/hooks';
+
 import Iconify from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import CustomPopover, { usePopover } from 'src/components/custom-popover';
@@ -31,6 +33,8 @@ export default function TourTableRow({
   const { name, price_adult, price_child, start_time, end_time, image, location } = row;
 
   const confirm = useBoolean();
+  const { user } = useAuthContext();
+  const isAdmin = user?.role === 'admin';
 
   const popover = usePopover();
 
@@ -51,9 +55,11 @@ export default function TourTableRow({
           <Avatar alt={name} src={image} variant="rounded" sx={{ width: 64, height: 64 }} />
         </TableCell>
         <TableCell align="right" sx={{ px: 1, whiteSpace: 'nowrap' }}>
-          <IconButton color={popover.open ? 'inherit' : 'default'} onClick={popover.onOpen}>
-            <Iconify icon="eva:more-vertical-fill" />
-          </IconButton>
+          {isAdmin ? (
+            <IconButton color={popover.open ? 'inherit' : 'default'} onClick={popover.onOpen}>
+              <Iconify icon="eva:more-vertical-fill" />
+            </IconButton>
+          ) : null}
         </TableCell>
       </TableRow>
 

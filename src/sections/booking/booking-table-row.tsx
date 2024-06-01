@@ -9,6 +9,8 @@ import Typography from '@mui/material/Typography';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
+import { useAuthContext } from 'src/auth/hooks';
+
 import Iconify from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import CustomPopover, { usePopover } from 'src/components/custom-popover';
@@ -24,6 +26,7 @@ export default function TourTableRow({ row, selected, onEditRow, onDeleteRow }: 
   const { person_quantity, code, status, tour, total_price, customer } = row;
 
   const confirm = useBoolean();
+  const { user } = useAuthContext();
 
   const popover = usePopover();
 
@@ -50,9 +53,11 @@ export default function TourTableRow({ row, selected, onEditRow, onDeleteRow }: 
           </Typography>
         </TableCell>
         <TableCell align="right" sx={{ px: 1, whiteSpace: 'nowrap' }}>
-          <IconButton color={popover.open ? 'inherit' : 'default'} onClick={popover.onOpen}>
-            <Iconify icon="eva:more-vertical-fill" />
-          </IconButton>
+          {user?.role === 'admin' ? (
+            <IconButton color={popover.open ? 'inherit' : 'default'} onClick={popover.onOpen}>
+              <Iconify icon="eva:more-vertical-fill" />
+            </IconButton>
+          ) : null}
         </TableCell>
       </TableRow>
 

@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import Button from '@mui/material/Button';
 import MenuItem from '@mui/material/MenuItem';
 import TableRow from '@mui/material/TableRow';
@@ -6,6 +8,8 @@ import IconButton from '@mui/material/IconButton';
 import ListItemText from '@mui/material/ListItemText';
 
 import { useBoolean } from 'src/hooks/use-boolean';
+
+import { useAuthContext } from 'src/auth/hooks';
 
 import Iconify from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
@@ -31,6 +35,8 @@ export default function UserTableRow({
   const { name, user_name, email, phone_number } = row;
 
   const confirm = useBoolean();
+  const { user } = useAuthContext();
+  const isAdmin = useMemo(() => user?.role === 'admin', [user]);
 
   const quickEdit = useBoolean();
 
@@ -58,9 +64,11 @@ export default function UserTableRow({
         <TableCell sx={{ whiteSpace: 'nowrap' }}>{email}</TableCell>
 
         <TableCell align="right" sx={{ px: 1, whiteSpace: 'nowrap' }}>
-          <IconButton color={popover.open ? 'inherit' : 'default'} onClick={popover.onOpen}>
-            <Iconify icon="eva:more-vertical-fill" />
-          </IconButton>
+          {isAdmin ? (
+            <IconButton color={popover.open ? 'inherit' : 'default'} onClick={popover.onOpen}>
+              <Iconify icon="eva:more-vertical-fill" />
+            </IconButton>
+          ) : null}
         </TableCell>
       </TableRow>
 

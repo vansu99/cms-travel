@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { paths } from 'src/routes/paths';
 
 import { useTranslate } from 'src/locales';
+import { useAuthContext } from 'src/auth/hooks';
 
 import SvgColor from 'src/components/svg-color';
 
@@ -39,6 +40,8 @@ const ICONS = {
 
 export function useNavData() {
   const { t } = useTranslate();
+  const { user } = useAuthContext();
+  const isAdmin = useMemo(() => user?.role === 'admin', [user]);
 
   const data = useMemo(
     () => [
@@ -54,10 +57,10 @@ export function useNavData() {
             children: [
               // { title: t('profile'), path: paths.dashboard.user.root },
               { title: t('list'), path: paths.dashboard.user.list },
-              { title: t('create'), path: paths.dashboard.user.new },
+              isAdmin ? { title: t('create'), path: paths.dashboard.user.new } : null,
               // { title: t('edit'), path: paths.dashboard.user.demo.edit },
               { title: t('account'), path: paths.dashboard.user.account },
-            ],
+            ].filter(Boolean),
           },
           // BLOG
           {
@@ -67,9 +70,9 @@ export function useNavData() {
             children: [
               { title: t('list'), path: paths.dashboard.post.root },
               // { title: t('details'), path: paths.dashboard.post.demo.details },
-              { title: t('create'), path: paths.dashboard.post.new },
+              isAdmin ? { title: t('create'), path: paths.dashboard.post.new } : null,
               // { title: t('edit'), path: paths.dashboard.post.demo.edit },
-            ],
+            ].filter(Boolean),
           },
           // TOUR
           {
@@ -79,9 +82,9 @@ export function useNavData() {
             children: [
               { title: t('list'), path: paths.dashboard.tour.root },
               // { title: t('details'), path: paths.dashboard.tour.demo.details },
-              { title: t('create'), path: paths.dashboard.tour.new },
+              isAdmin ? { title: t('create'), path: paths.dashboard.tour.new } : null,
               // { title: t('edit'), path: paths.dashboard.tour.demo.edit },
-            ],
+            ].filter(Boolean),
           },
           // BOOKING
           {
@@ -96,7 +99,7 @@ export function useNavData() {
         ],
       },
     ],
-    [t]
+    [t, isAdmin]
   );
 
   return data;

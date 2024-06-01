@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { format } from 'date-fns';
 
 import Button from '@mui/material/Button';
@@ -8,6 +9,8 @@ import TableCell from '@mui/material/TableCell';
 import IconButton from '@mui/material/IconButton';
 
 import { useBoolean } from 'src/hooks/use-boolean';
+
+import { useAuthContext } from 'src/auth/hooks';
 
 import Iconify from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
@@ -31,6 +34,8 @@ export default function PostTableRow({
   const { created_at, title, image, location } = row;
 
   const confirm = useBoolean();
+  const { user } = useAuthContext();
+  const isAdmin = useMemo(() => user?.role === 'admin', [user]);
 
   const popover = usePopover();
 
@@ -50,9 +55,11 @@ export default function PostTableRow({
         </TableCell>
 
         <TableCell align="right" sx={{ px: 1, whiteSpace: 'nowrap' }}>
-          <IconButton color={popover.open ? 'inherit' : 'default'} onClick={popover.onOpen}>
-            <Iconify icon="eva:more-vertical-fill" />
-          </IconButton>
+          {isAdmin ? (
+            <IconButton color={popover.open ? 'inherit' : 'default'} onClick={popover.onOpen}>
+              <Iconify icon="eva:more-vertical-fill" />
+            </IconButton>
+          ) : null}
         </TableCell>
       </TableRow>
 
