@@ -1,5 +1,5 @@
 import * as Yup from 'yup';
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useForm, Controller } from 'react-hook-form';
 
@@ -20,6 +20,15 @@ import axios from 'src/utils/axios';
 
 import { useSnackbar } from 'src/components/snackbar';
 import FormProvider, { RHFEditor, RHFTextField } from 'src/components/hook-form';
+
+import { FilePond, registerPlugin } from 'react-filepond';
+import 'filepond/dist/filepond.min.css';
+import FilePondPluginImageExifOrientation from 'filepond-plugin-image-exif-orientation';
+import FilePondPluginImagePreview from 'filepond-plugin-image-preview';
+import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css';
+import { CLOUDINARY_CLOUDNAME, CLOUDINARY_PRESET_KEY } from 'src/config-global';
+
+registerPlugin(FilePondPluginImageExifOrientation, FilePondPluginImagePreview);
 
 type Props = {
   currentTour?: any;
@@ -61,6 +70,7 @@ export default function TourNewEditForm({ currentTour }: Props) {
       description: currentTour?.description || '',
       start_time: new Date(currentTour?.start_time) || new Date(),
       end_time: new Date(currentTour?.end_time) || null,
+      image: currentTour?.image || '',
     }),
     [currentTour]
   );
@@ -83,30 +93,85 @@ export default function TourNewEditForm({ currentTour }: Props) {
     }
   }, [currentTour, defaultValues, reset]);
 
+  const [file, setFile] = useState<any>();
+  const handleFileUpload = (item: any) => {
+    setFile(item[0]);
+    currentTour = { ...currentTour, image: currentTour?.image };
+  };
+
   const onSubmit = handleSubmit(async (data) => {
-    try {
-      let payload = null as any;
+    console.log(CLOUDINARY_CLOUDNAME);
+    const preset_key = 'hz1vxe85';
+    const clound_name = 'droaa5vpq';
 
-      if (currentTour) {
-        payload = { ...data, image: currentTour?.image || '', tour_id: currentTour?.tour_id };
-      } else {
-        payload = {
-          ...data,
-          image:
-            'https://bcp.cdnchinhphu.vn/344443456812359680/2022/12/27/nhattrang3-16721128389061596602579.jpg',
-        };
-      }
-
-      const response = await axios.post(currentTour ? '/tour/update' : '/tour/create', payload);
-
-      if (response.data.status) {
-        reset();
-        enqueueSnackbar(currentTour ? 'Update success!' : 'Create success!');
-        router.push(paths.dashboard.tour.root);
-      }
-    } catch (error) {
-      console.error(error);
+    if (!file) {
+      console.error('Please select a file.');
+      return;
     }
+
+    const uniqueUploadId = `uqid-${Date.now()}`;
+    const chunkSize = 5 * 1024 * 1024;
+    const totalChunks = Math.ceil(file.size / chunkSize);
+    let currentChunk = 0;
+    const uploadChunk = async (start: any, end: any) => {
+      const formData = new FormData();
+      formData.append('file', file.slice(start, end));
+      formData.append('cloud_name', clound_name);
+      formData.append('upload_preset', preset_key);
+      const contentRange = `bytes ${start}-${end - 1}/${file.size}`;
+
+      try {
+        const response = await fetch(`https://api.cloudinary.com/v1_1/${clound_name}/upload`, {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-Unique-Upload-Id': uniqueUploadId,
+            'Content-Range': contentRange,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Chunk upload failed.');
+        }
+
+        currentChunk++;
+
+        if (currentChunk < totalChunks) {
+          const nextStart = currentChunk * chunkSize;
+          const nextEnd = Math.min(nextStart + chunkSize, file.size);
+          uploadChunk(nextStart, nextEnd);
+        } else {
+          const fetchResponse = await response.json();
+
+          let payload = null as any;
+          if (currentTour) {
+            payload = {
+              ...data,
+              image: fetchResponse.secure_url || '',
+              tour_id: currentTour?.tour_id,
+            };
+          } else {
+            payload = {
+              ...data,
+              image: fetchResponse.secure_url,
+            };
+          }
+
+          const res = await axios.post(currentTour ? '/tour/update' : '/tour/create', payload);
+
+          if (res.data.status) {
+            reset();
+            enqueueSnackbar(currentTour ? 'Update success!' : 'Create success!');
+            router.push(paths.dashboard.tour.root);
+          }
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    const start = 0;
+    const end = Math.min(chunkSize, file.size);
+    uploadChunk(start, end);
   });
 
   const renderDetails = (
@@ -131,6 +196,33 @@ export default function TourNewEditForm({ currentTour }: Props) {
             <RHFTextField name="location" label="Location" />
             <RHFTextField type="number" name="price_adult" label="Price adult" />
             <RHFTextField type="number" name="price_child" label="Price children" />
+            <FilePond
+              server={{
+                load: (src, load) => {
+                  fetch(src)
+                    .then((res) => res.blob())
+                    .then(load);
+                },
+              }}
+              files={
+                currentTour?.image
+                  ? [
+                      {
+                        source: currentTour?.image,
+                        options: {
+                          type: 'local',
+                        },
+                      },
+                    ]
+                  : []
+              }
+              allowMultiple={false}
+              onupdatefiles={(fileItems) => {
+                handleFileUpload(fileItems.map((fileItem) => fileItem.file));
+              }}
+              name="files"
+              labelIdle='Drag & Drop your image or <span class="filepond--label-action">Browse</span>'
+            />
             <Stack spacing={1.5}>
               <Typography variant="subtitle2">Description</Typography>
               <RHFEditor simple name="description" />
