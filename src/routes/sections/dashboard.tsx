@@ -6,6 +6,9 @@ import DashboardLayout from 'src/layouts/dashboard';
 
 import { LoadingScreen } from 'src/components/loading-screen';
 
+// OVERVIEW
+const IndexPage = lazy(() => import('src/pages/dashboard/app'));
+
 // USER
 const UserProfilePage = lazy(() => import('src/pages/dashboard/user/profile'));
 const UserListPage = lazy(() => import('src/pages/dashboard/user/list'));
@@ -42,6 +45,10 @@ export const dashboardRoutes = [
       </AuthGuard>
     ),
     children: [
+      {
+        element: <IndexPage />,
+        index: true,
+      },
       {
         path: 'user',
         children: [
