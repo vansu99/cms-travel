@@ -1,15 +1,19 @@
 import * as Yup from 'yup';
-import { useMemo, useEffect, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useForm, Controller } from 'react-hook-form';
+import ImageUploading, { ImageListType } from 'react-images-uploading';
 
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
+import Button from '@mui/material/Button';
+import { styled } from '@mui/material/styles';
 import Grid from '@mui/material/Unstable_Grid2';
 import CardHeader from '@mui/material/CardHeader';
 import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
@@ -17,18 +21,10 @@ import { useRouter } from 'src/routes/hooks';
 import { useResponsive } from 'src/hooks/use-responsive';
 
 import axios from 'src/utils/axios';
+import { imgUrlToFileObj, imageUrlToBase64 } from 'src/utils/upload-img';
 
 import { useSnackbar } from 'src/components/snackbar';
 import FormProvider, { RHFEditor, RHFTextField } from 'src/components/hook-form';
-
-import { FilePond, registerPlugin } from 'react-filepond';
-import 'filepond/dist/filepond.min.css';
-import FilePondPluginImageExifOrientation from 'filepond-plugin-image-exif-orientation';
-import FilePondPluginImagePreview from 'filepond-plugin-image-preview';
-import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css';
-import { CLOUDINARY_CLOUDNAME, CLOUDINARY_PRESET_KEY } from 'src/config-global';
-
-registerPlugin(FilePondPluginImageExifOrientation, FilePondPluginImagePreview);
 
 type Props = {
   currentTour?: any;
@@ -70,7 +66,6 @@ export default function TourNewEditForm({ currentTour }: Props) {
       description: currentTour?.description || '',
       start_time: new Date(currentTour?.start_time) || new Date(),
       end_time: new Date(currentTour?.end_time) || null,
-      image: currentTour?.image || '',
     }),
     [currentTour]
   );
@@ -90,27 +85,40 @@ export default function TourNewEditForm({ currentTour }: Props) {
   useEffect(() => {
     if (currentTour) {
       reset(defaultValues);
+
+      if (currentTour.image) {
+        const getInitImg = async () => {
+          const response1 = await imgUrlToFileObj(currentTour.image);
+          const response2 = await imageUrlToBase64(currentTour.image);
+          setImages([{ dataURL: response2, file: response1 }]);
+        };
+        getInitImg();
+      }
     }
   }, [currentTour, defaultValues, reset]);
 
-  const [file, setFile] = useState<any>();
-  const handleFileUpload = (item: any) => {
-    setFile(item[0]);
-    currentTour = { ...currentTour, image: currentTour?.image };
+  const [images, setImages] = useState<any>([]);
+  const onChange = (imageList: ImageListType, addUpdateIndex: number[] | undefined) => {
+    setImages(imageList as never[]);
   };
-
+  const VisuallyHiddenInput = styled('input')({
+    clip: 'rect(0 0 0 0)',
+    clipPath: 'inset(50%)',
+    height: 1,
+    overflow: 'hidden',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    whiteSpace: 'nowrap',
+    width: 1,
+  });
   const onSubmit = handleSubmit(async (data) => {
-    console.log(CLOUDINARY_CLOUDNAME);
     const preset_key = 'hz1vxe85';
     const clound_name = 'droaa5vpq';
 
-    if (!file) {
-      console.error('Please select a file.');
-      return;
-    }
-
     const uniqueUploadId = `uqid-${Date.now()}`;
     const chunkSize = 5 * 1024 * 1024;
+    const file = images[0].file;
     const totalChunks = Math.ceil(file.size / chunkSize);
     let currentChunk = 0;
     const uploadChunk = async (start: any, end: any) => {
@@ -134,7 +142,7 @@ export default function TourNewEditForm({ currentTour }: Props) {
           throw new Error('Chunk upload failed.');
         }
 
-        currentChunk++;
+        currentChunk += 1;
 
         if (currentChunk < totalChunks) {
           const nextStart = currentChunk * chunkSize;
@@ -196,33 +204,35 @@ export default function TourNewEditForm({ currentTour }: Props) {
             <RHFTextField name="location" label="Location" />
             <RHFTextField type="number" name="price_adult" label="Price adult" />
             <RHFTextField type="number" name="price_child" label="Price children" />
-            <FilePond
-              server={{
-                load: (src, load) => {
-                  fetch(src)
-                    .then((res) => res.blob())
-                    .then(load);
-                },
-              }}
-              files={
-                currentTour?.image
-                  ? [
-                      {
-                        source: currentTour?.image,
-                        options: {
-                          type: 'local',
-                        },
-                      },
-                    ]
-                  : []
-              }
-              allowMultiple={false}
-              onupdatefiles={(fileItems) => {
-                handleFileUpload(fileItems.map((fileItem) => fileItem.file));
-              }}
-              name="files"
-              labelIdle='Drag & Drop your image or <span class="filepond--label-action">Browse</span>'
-            />
+            <ImageUploading
+              value={images}
+              onChange={onChange}
+              maxNumber={1}
+              acceptType={['jpg', 'png']}
+            >
+              {({ imageList, onImageUpdate, onImageRemove }) => (
+                <div className="upload__image-wrapper">
+                  <Button
+                    variant="contained"
+                    startIcon={<CloudUploadIcon />}
+                    onClick={() => onImageUpdate(0)}
+                  >
+                    Upload file
+                    <VisuallyHiddenInput type="file" />
+                  </Button>
+                  {imageList.map((image, index) => (
+                    <Button
+                      key={index}
+                      className="image-item"
+                      style={{ marginTop: 20 }}
+                      onClick={() => onImageRemove(0)}
+                    >
+                      <img src={image.dataURL} alt="" style={{ cursor: 'pointer' }} />
+                    </Button>
+                  ))}
+                </div>
+              )}
+            </ImageUploading>
             <Stack spacing={1.5}>
               <Typography variant="subtitle2">Description</Typography>
               <RHFEditor simple name="description" />
