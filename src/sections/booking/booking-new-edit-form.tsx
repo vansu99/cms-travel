@@ -19,6 +19,8 @@ import { useResponsive } from 'src/hooks/use-responsive';
 
 import axios from 'src/utils/axios';
 
+import { useAuthContext } from 'src/auth/hooks';
+
 import { useSnackbar } from 'src/components/snackbar';
 import FormProvider, { RHFSelect, RHFTextField } from 'src/components/hook-form';
 
@@ -45,6 +47,7 @@ export default function TourNewEditForm({ currentBooking }: Props) {
   const router = useRouter();
 
   const mdUp = useResponsive('up', 'md');
+  const { user } = useAuthContext();
 
   const { enqueueSnackbar } = useSnackbar();
 
@@ -102,7 +105,7 @@ export default function TourNewEditForm({ currentBooking }: Props) {
           payload = {
             status: data?.status,
             id: currentBooking?.tour_regis_id,
-            customer_id: currentBooking?.customer?.customer_id,
+            customer_id: user?.customer_id,
           };
         } else {
           payload = { status: data?.status, id: currentBooking?.tour_regis_id };
